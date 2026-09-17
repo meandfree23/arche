@@ -183,8 +183,9 @@
         
         <!-- Category & Order Breadcrumb + Share -->
         <div class="flex items-center justify-between gap-4">
-          <div class="text-[11px] font-sans tracking-widest uppercase" style="color: var(--text-muted);" id="articleCategoryBreadcrumb">
+          <div class="text-[11px] font-sans tracking-widest uppercase flex items-center gap-2 flex-wrap" style="color: var(--text-muted);" id="articleCategoryBreadcrumb">
             문학의 심연 — 제 1편
+            <span id="articleDateBadge" class="px-1.5 py-0.5 rounded-full text-[10px] normal-case tracking-normal" style="background-color: var(--accent-soft); color: var(--accent);"></span>
           </div>
           <button onclick="copyArticleLink()" class="flex items-center gap-1 text-[11px] font-sans hover:opacity-60 transition shrink-0" style="color: var(--text-muted);">
             <i data-lucide="link-2" class="w-3.5 h-3.5"></i>
@@ -292,7 +293,8 @@
       <div class="p-6 border-b flex items-center justify-between" style="border-color: var(--border-subtle);">
         <div>
           <h2 class="font-title text-base font-semibold tracking-wider" style="color: var(--text-primary);">ARCHE 서재</h2>
-          <span class="text-xs font-serif" style="color: var(--text-muted);">26편의 에디토리얼 칼럼</span>
+          <span class="text-xs font-serif block" style="color: var(--text-muted);" id="zenTotalCount">26편의 에디토리얼 칼럼</span>
+          <span class="text-[10px] font-sans block mt-0.5" style="color: var(--accent);" id="zenLastUpdated"></span>
         </div>
         <button onclick="closeMenu()" class="p-1 hover:opacity-60" style="color: var(--text-secondary);">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -371,8 +373,26 @@
       renderCategoryNav();
       loadStoredTheme();
       renderCurrentArticle();
+      updateLibraryMeta();
       setupEventListeners();
       lucide.createIcons();
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const [y, m, d] = dateStr.split('-');
+      return `${y}.${m}.${d}`;
+    }
+
+    function updateLibraryMeta() {
+      const totalEl = document.getElementById('zenTotalCount');
+      const lastUpdatedEl = document.getElementById('zenLastUpdated');
+      if (totalEl) totalEl.innerText = `${columnsData.length}편의 에디토리얼 칼럼`;
+      if (lastUpdatedEl) {
+        const dates = columnsData.map(a => a.date_added).filter(Boolean).sort();
+        const latest = dates[dates.length - 1];
+        lastUpdatedEl.innerText = latest ? `최근 업데이트 ${formatDate(latest)}` : '';
+      }
     }
 
     function renderCategoryNav() {
@@ -415,7 +435,14 @@
       const cat = CATEGORIES[currentCategoryIndex];
 
       // Breadcrumb
-      document.getElementById('articleCategoryBreadcrumb').innerText = `${cat.label} — 제 ${article.order}편 (총 ${articles.length}편)`;
+      document.getElementById('articleCategoryBreadcrumb').childNodes[0].nodeValue = `${cat.label} — 제 ${article.order}편 (총 ${articles.length}편)`;
+      const dateBadge = document.getElementById('articleDateBadge');
+      if (article.date_added) {
+        dateBadge.innerText = `${formatDate(article.date_added)} 추가`;
+        dateBadge.classList.remove('hidden');
+      } else {
+        dateBadge.classList.add('hidden');
+      }
 
       // Article animation
       const wrapper = document.getElementById('articleContentWrapper');
