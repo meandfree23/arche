@@ -1,0 +1,42 @@
+name: Daily ARCHE Editorial Update
+
+on:
+  schedule:
+    # 매일 새벽 06:00 KST (21:00 UTC) - 아침 기상 전 신선한 데일리 사유 배달
+    - cron: '0 21 * * *'
+    # 자정 00:00 KST (15:00 UTC) - 날짜 전환 시 2차 갱신
+    - cron: '0 15 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  TZ: 'Asia/Seoul'
+
+jobs:
+  update-daily-editorial:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Run Daily Curator Pipeline
+        run: |
+          python scripts/curator.py --daily-cron
+
+      - name: Commit & Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || (git commit -m "Auto-update: Daily ARCHE Editorial Roll [$(date '+%Y-%m-%d %H:%M KST')]" && git push origin main)

@@ -86,13 +86,35 @@ def add_entry(entry):
     save_db(data)
     print(f"✨ 새로운 문구가 아카이브에 성공적으로 안착되었습니다. (ID: {entry.get('id')})")
 
+def run_daily_cron():
+    today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+    date_str = today.strftime("%Y-%m-%d %H:%M:%S KST")
+    day_of_year = today.timetuple().tm_yday
+    
+    meta_path = os.path.join(BASE_DIR, "data", "daily_meta.json")
+    meta = {
+        "last_updated": date_str,
+        "day_of_year": day_of_year,
+        "active_category_shift": (day_of_year % 5),
+        "status": "healthy"
+    }
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
+        
+    print(f"[{date_str}] ✨ ARCHE 데일리 큐레이션 cron 작업이 성공적으로 실행되었습니다.")
+    print(f"• 일차(Day of Year): {day_of_year}일")
+    print(f"• 오늘의 추천 영역 시프트: index {meta['active_category_shift']}")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="문학의 정원 큐레이션 CLI")
     parser.add_argument("--stats", action="store_true", help="현재 아카이브 통계 출력")
     parser.add_argument("--today", action="store_true", help="오늘의 문장 출력")
+    parser.add_argument("--daily-cron", action="store_true", help="매일 새벽 자동 크론 실행 및 메타 갱신")
     args = parser.parse_args()
 
-    if args.stats:
+    if args.daily_cron:
+        run_daily_cron()
+    elif args.stats:
         show_stats()
     elif args.today:
         print_today()
