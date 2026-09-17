@@ -147,7 +147,7 @@
     <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
       
       <!-- Brand Logo -->
-      <a href="javascript:void(0)" onclick="goToArticle(0, 0)" class="group flex items-baseline gap-2">
+      <a href="javascript:void(0)" onclick="goToLatestArticle()" class="group flex items-baseline gap-2">
         <span class="font-title text-lg tracking-[0.25em] font-semibold" style="color: var(--text-primary);">ARCHE</span>
       </a>
 
@@ -369,7 +369,10 @@
         console.warn("데이터 로드 실패", err);
       }
 
-      resolveArticleFromHash();
+      const matchedHash = resolveArticleFromHash();
+      if (!matchedHash) {
+        resolveLatestArticle();
+      }
       renderCategoryNav();
       loadStoredTheme();
       renderCurrentArticle();
@@ -536,6 +539,30 @@
       return false;
     }
 
+    function resolveLatestArticle() {
+      if (!columnsData.length) return false;
+      let latest = columnsData[0];
+      columnsData.forEach(a => {
+        const dLatest = latest.date_added || '0000-00-00';
+        const dA = a.date_added || '0000-00-00';
+        if (dA > dLatest) latest = a;
+      });
+      const cIdx = CATEGORIES.findIndex(c => c.id === latest.category);
+      if (cIdx === -1) return false;
+      const catArticles = columnsData.filter(c => c.category === latest.category);
+      const aIdx = catArticles.indexOf(latest);
+      currentCategoryIndex = cIdx;
+      currentArticleIndex = aIdx;
+      return true;
+    }
+
+    function goToLatestArticle() {
+      resolveLatestArticle();
+      renderCategoryNav();
+      renderCurrentArticle();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function copyArticleLink() {
       const url = location.href;
       const label = document.getElementById('shareLinkLabel');
@@ -697,63 +724,30 @@
       const q = (query || '').trim().toLowerCase();
       const container = document.getElementById('zenEssayList');
 
-      const categoryIndexMap = {};
-      CATEGORIES.forEach((cat, idx) => { categoryIndexMap[cat.id] = idx; });
+      const sections = CATEGORIES.map((cat, cIdx) => {
+        const catArticles = columnsData.filter(c => c.category === cat.id);
+        const visibleArticles = q
+          ? catArticles.filter(a =>
+              (a.title || '').toLowerCase().includes(q) ||
+              (a.author_topic || '').toLowerCase().includes(q) ||
+              cat.label.toLowerCase().includes(q)
+            )
+          : catArticles;
 
-      let items = columnsData.slice();
-      if (q) {
-        items = items.filter(a =>
-          (a.title || '').toLowerCase().includes(q) ||
-          (a.author_topic || '').toLowerCase().includes(q) ||
-          (a.category || '').toLowerCase().includes(q)
-        );
-      }
+        if (q && visibleArticles.length === 0) return '';
 
-      // 최신 업데이트순 (date_added 내림차순) 정렬
-      items.sort((a, b) => {
-        const dA = a.date_added || '0000-00-00';
-        const dB = b.date_added || '0000-00-00';
-        if (dA !== dB) return dB.localeCompare(dA);
-        return (a.order || 0) - (b.order || 0);
-      });
-
-      if (items.length === 0) {
-        container.innerHTML = `<div class="text-xs font-sans text-center py-10" style="color: var(--text-muted);">검색 결과가 없습니다.</div>`;
-        lucide.createIcons();
-        return;
-      }
-
-      // 날짜별로 그룹핑하여 헤더 표시
-      const groups = [];
-      let lastDate = null;
-      items.forEach(a => {
-        const d = a.date_added || '날짜 미상';
-        if (d !== lastDate) {
-          groups.push({ date: d, items: [] });
-          lastDate = d;
-        }
-        groups[groups.length - 1].items.push(a);
-      });
-
-      container.innerHTML = groups.map(group => {
-        const dateLabel = group.date === '날짜 미상' ? group.date : formatDate(group.date);
         return `
           <div>
-            <h3 class="font-serif text-xs uppercase font-bold tracking-widest mb-3 opacity-60 flex items-center gap-2" style="color: var(--accent);">
-              <span>${dateLabel}</span>
-              <span class="opacity-50 font-sans normal-case tracking-normal">· ${group.items.length}편</span>
+            <h3 class="font-serif text-xs uppercase font-bold tracking-widest mb-3 opacity-60" style="color: var(--accent);">
+              ${cat.label}
             </h3>
             <div class="space-y-3">
-              ${group.items.map((a) => {
-                const cIdx = categoryIndexMap[a.category];
-                const catArticles = columnsData.filter(c => c.category === a.category);
+              ${visibleArticles.map((a) => {
                 const aIdx = catArticles.indexOf(a);
-                const catLabel = (CATEGORIES[cIdx] || {}).label || a.category;
                 return `
                 <div onclick="goToArticle(${cIdx}, ${aIdx}); closeMenu();" class="cursor-pointer group">
-                  <div class="text-[10px] font-sans uppercase tracking-wide opacity-50 mb-0.5" style="color: var(--text-muted);">${catLabel}</div>
                   <div class="text-xs sm:text-sm font-serif font-medium leading-snug group-hover:text-amber-800 transition" style="color: var(--text-primary);">
-                    ${a.title}
+                    ${a.order}. ${a.title}
                   </div>
                   <div class="text-[11px] font-sans italic opacity-60 mt-0.5" style="color: var(--text-muted);">
                     ${a.author_topic}
@@ -765,6 +759,11 @@
           </div>
         `;
       }).join('');
+
+      const hasAnyContent = sections.replace(/\s/g, '').length > 0;
+      container.innerHTML = hasAnyContent
+        ? sections
+        : `<div class="text-xs font-sans text-center py-10" style="color: var(--text-muted);">검색 결과가 없습니다.</div>`;
 
       lucide.createIcons();
     }
