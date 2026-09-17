@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ARCHE | 문학의 정원</title>
+  <meta name="description" content="프란츠 카프카부터 봉준호, 니체, 롤랑 바르트, 그리스 신화까지 — 문학·영화·철학·비평·신화를 가로지르는 매일의 에디토리얼 칼럼과 사색의 공간, ARCHE 문학의 정원.">
   
   <!-- Inline SVG Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238E4B23' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/><path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/></svg>">
@@ -180,9 +181,15 @@
       <!-- ARTICLE HERO: PURE HEADLINE EMPHASIS -->
       <header class="space-y-6">
         
-        <!-- Category & Order Breadcrumb -->
-        <div class="text-[11px] font-sans tracking-widest uppercase" style="color: var(--text-muted);" id="articleCategoryBreadcrumb">
-          문학의 심연 — 제 1편
+        <!-- Category & Order Breadcrumb + Share -->
+        <div class="flex items-center justify-between gap-4">
+          <div class="text-[11px] font-sans tracking-widest uppercase" style="color: var(--text-muted);" id="articleCategoryBreadcrumb">
+            문학의 심연 — 제 1편
+          </div>
+          <button onclick="copyArticleLink()" class="flex items-center gap-1 text-[11px] font-sans hover:opacity-60 transition shrink-0" style="color: var(--text-muted);">
+            <i data-lucide="link-2" class="w-3.5 h-3.5"></i>
+            <span id="shareLinkLabel">링크 복사</span>
+          </button>
         </div>
 
         <!-- Dominant Headline -->
@@ -301,8 +308,16 @@
         </div>
       </div>
 
+      <!-- Keyword Search -->
+      <div class="px-6 pt-4 pb-2">
+        <div class="relative">
+          <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style="color: var(--text-muted);"></i>
+          <input id="zenSearchInput" type="text" oninput="renderZenList(this.value)" placeholder="작가, 작품, 키워드로 검색..." class="w-full pl-9 pr-3 py-2 rounded-lg border text-xs font-sans focus:outline-none transition-all" style="background-color: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);">
+        </div>
+      </div>
+
       <!-- Essays List by Category -->
-      <div class="flex-1 overflow-y-auto p-6 space-y-8" id="zenEssayList">
+      <div class="flex-1 overflow-y-auto p-6 pt-2 space-y-8" id="zenEssayList">
         <!-- Rendered by JS -->
       </div>
 
@@ -337,6 +352,7 @@
         console.warn("데이터 로드 실패", err);
       }
 
+      resolveArticleFromHash();
       renderCategoryNav();
       loadStoredTheme();
       renderCurrentArticle();
@@ -418,6 +434,9 @@
       // Prompt
       document.getElementById('articlePromptText').innerText = article.reflection_prompt;
 
+      // Sync shareable URL (deep link to this article)
+      updateUrlHash(article.id);
+
       // Prev / Next button states
       const prevBtn = document.getElementById('prevBtn');
       const nextBtnLabel = document.getElementById('nextBtnLabel');
@@ -441,6 +460,44 @@
       // Load Note
       loadNote(article.id);
       lucide.createIcons();
+    }
+
+    function updateUrlHash(articleId) {
+      if (!articleId) return;
+      const newHash = '#' + encodeURIComponent(articleId);
+      if (location.hash !== newHash) {
+        history.replaceState(null, '', newHash);
+      }
+    }
+
+    function resolveArticleFromHash() {
+      const raw = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+      if (!raw) return false;
+      for (let cIdx = 0; cIdx < CATEGORIES.length; cIdx++) {
+        const catArticles = columnsData.filter(c => c.category === CATEGORIES[cIdx].id);
+        const aIdx = catArticles.findIndex(a => a.id === raw);
+        if (aIdx !== -1) {
+          currentCategoryIndex = cIdx;
+          currentArticleIndex = aIdx;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function copyArticleLink() {
+      const url = location.href;
+      const label = document.getElementById('shareLinkLabel');
+      const finish = (text) => {
+        if (!label) return;
+        label.innerText = text;
+        setTimeout(() => { label.innerText = '링크 복사'; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => finish('복사 완료!')).catch(() => finish('복사 실패'));
+      } else {
+        finish('복사 실패');
+      }
     }
 
     function goToArticle(catIdx, artIdx) {
@@ -585,17 +642,31 @@
     }
 
     // Zen Drawer
-    function openMenu() {
+    function renderZenList(query) {
+      const q = (query || '').trim().toLowerCase();
       const container = document.getElementById('zenEssayList');
-      container.innerHTML = CATEGORIES.map((cat, cIdx) => {
+
+      const sections = CATEGORIES.map((cat, cIdx) => {
         const catArticles = columnsData.filter(c => c.category === cat.id);
+        const visibleArticles = q
+          ? catArticles.filter(a =>
+              (a.title || '').toLowerCase().includes(q) ||
+              (a.author_topic || '').toLowerCase().includes(q) ||
+              cat.label.toLowerCase().includes(q)
+            )
+          : catArticles;
+
+        if (q && visibleArticles.length === 0) return '';
+
         return `
           <div>
             <h3 class="font-serif text-xs uppercase font-bold tracking-widest mb-3 opacity-60" style="color: var(--accent);">
               ${cat.label}
             </h3>
             <div class="space-y-3">
-              ${catArticles.map((a, aIdx) => `
+              ${visibleArticles.map((a) => {
+                const aIdx = catArticles.indexOf(a);
+                return `
                 <div onclick="goToArticle(${cIdx}, ${aIdx}); closeMenu();" class="cursor-pointer group">
                   <div class="text-xs sm:text-sm font-serif font-medium leading-snug group-hover:text-amber-800 transition" style="color: var(--text-primary);">
                     ${a.order}. ${a.title}
@@ -604,11 +675,25 @@
                     ${a.author_topic}
                   </div>
                 </div>
-              `).join('')}
+              `;
+              }).join('')}
             </div>
           </div>
         `;
       }).join('');
+
+      const hasAnyContent = sections.replace(/\s/g, '').length > 0;
+      container.innerHTML = hasAnyContent
+        ? sections
+        : `<div class="text-xs font-sans text-center py-10" style="color: var(--text-muted);">검색 결과가 없습니다.</div>`;
+
+      lucide.createIcons();
+    }
+
+    function openMenu() {
+      const searchInput = document.getElementById('zenSearchInput');
+      if (searchInput) searchInput.value = '';
+      renderZenList('');
 
       document.getElementById('zenMenuModal').classList.remove('hidden');
       setTimeout(() => {
