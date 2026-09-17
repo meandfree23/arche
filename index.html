@@ -221,6 +221,20 @@
       </figure>
 
 
+      <!-- ZEITGEIST CONNECTION: TODAY'S RESEARCH-GROUNDED INSIGHT -->
+      <section id="zeitgeistSection" class="mt-4 p-6 sm:p-8 rounded-2xl" style="background-color: var(--accent-soft); border: 1px solid var(--border-subtle);">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="newspaper" class="w-3.5 h-3.5" style="color: var(--accent);"></i>
+          <span class="text-[11px] font-sans tracking-widest uppercase font-semibold" style="color: var(--accent);">
+            시대와의 접속
+          </span>
+        </div>
+        <p id="articleZeitgeist" class="text-sm sm:text-base leading-relaxed font-serif" style="color: var(--text-primary);">
+          <!-- Zeitgeist connection text -->
+        </p>
+      </section>
+
+
       <!-- REFLECTIVE INQUIRY & PRIVATE NOTE -->
       <section class="mt-8 pt-10 border-t space-y-6" style="border-color: var(--border-subtle);">
         <div class="space-y-2">
@@ -433,6 +447,15 @@
 
       // Prompt
       document.getElementById('articlePromptText').innerText = article.reflection_prompt;
+
+      // Zeitgeist connection (today's research-grounded insight)
+      const zgSection = document.getElementById('zeitgeistSection');
+      if (article.zeitgeist_connection) {
+        document.getElementById('articleZeitgeist').innerText = article.zeitgeist_connection;
+        zgSection.classList.remove('hidden');
+      } else {
+        zgSection.classList.add('hidden');
+      }
 
       // Sync shareable URL (deep link to this article)
       updateUrlHash(article.id);
