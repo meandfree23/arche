@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-paper">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARCHE | 문학의 정원</title>
+  
+  <!-- Inline SVG Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238E4B23' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'/><path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z'/></svg>">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+KR:wght@300;400;500;600;700;900&family=Pretendard:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Noto Serif KR"', '"Cormorant Garamond"', 'serif'],
+            latin: ['"Cormorant Garamond"', 'serif'],
+            title: ['"Cinzel"', '"Noto Serif KR"', 'serif'],
+            sans: ['Pretendard', '-apple-system', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root.theme-paper {
+      --bg-main: #F7F5F0;
+      --bg-surface: #FCFAF6;
+      --bg-card: #FFFFFF;
+      --border-subtle: #E8E3DA;
+      --text-primary: #18191B;
+      --text-secondary: #52555C;
+      --text-muted: #8E9199;
+      --accent: #8E4B23;
+      --accent-soft: rgba(142, 75, 35, 0.06);
+    }
+
+    :root.theme-dark {
+      --bg-main: #131416;
+      --bg-surface: #191B1F;
+      --bg-card: #21242A;
+      --border-subtle: #262B33;
+      --text-primary: #EEF0F2;
+      --text-secondary: #A2A7B0;
+      --text-muted: #626772;
+      --accent: #DEAB75;
+      --accent-soft: rgba(222, 171, 117, 0.1);
+    }
+
+    :root.theme-light {
+      --bg-main: #FFFFFF;
+      --bg-surface: #FAFAFA;
+      --bg-card: #FFFFFF;
+      --border-subtle: #F0F0F0;
+      --text-primary: #111827;
+      --text-secondary: #4B5563;
+      --text-muted: #9CA3AF;
+      --accent: #2B3441;
+      --accent-soft: rgba(43, 52, 65, 0.06);
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      transition: background-color 0.4s ease, color 0.4s ease;
+      font-family: "Noto Serif KR", serif;
+      word-break: keep-all;
+    }
+
+    /* Editorial Headline Emphasis */
+    .article-headline {
+      font-family: "Noto Serif KR", serif;
+      font-weight: 800;
+      line-height: 1.42;
+      letter-spacing: -0.025em;
+    }
+
+    /* Long-form reading typography */
+    .article-body p {
+      margin-bottom: 2.2rem;
+      line-height: 2.25;
+      font-size: var(--article-font-size, 1.125rem);
+      color: var(--text-primary);
+      text-align: justify;
+      letter-spacing: -0.015em;
+    }
+
+    .article-lead {
+      font-size: 1.28rem;
+      line-height: 2.15;
+      color: var(--text-secondary);
+      font-weight: 400;
+      padding-bottom: 2rem;
+      margin-bottom: 3rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .article-dropcap::first-letter {
+      font-size: 3.8rem;
+      float: left;
+      line-height: 0.8;
+      padding-right: 0.8rem;
+      padding-top: 0.2rem;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Minimal Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: 2px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ULTRA-MINIMAL SINGLE HEADER -->
+  <header class="sticky top-0 z-40 backdrop-blur-md transition-colors duration-300" style="background-color: rgba(var(--bg-main), 0.92); border-bottom: 1px solid var(--border-subtle);">
+    <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="javascript:void(0)" onclick="goToArticle(0, 0)" class="group flex items-baseline gap-2">
+        <span class="font-title text-lg tracking-[0.25em] font-semibold" style="color: var(--text-primary);">ARCHE</span>
+      </a>
+
+      <!-- Minimal 5 Category Navigation (Inline) -->
+      <nav class="hidden md:flex items-center space-x-6 text-xs sm:text-sm font-serif" id="minimalCategoryNav">
+        <!-- Injected by JS -->
+      </nav>
+
+      <!-- Right Zen Drawer Trigger -->
+      <div class="flex items-center space-x-4 text-xs font-serif">
+        <button onclick="openMenu()" class="flex items-center gap-1.5 py-1 px-2 hover:opacity-60 transition text-xs" style="color: var(--text-secondary);">
+          <i data-lucide="menu" class="w-4 h-4"></i>
+          <span>서재</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Category Scroller (Only on small screens) -->
+    <nav class="md:hidden flex items-center space-x-5 overflow-x-auto no-scrollbar px-6 py-2 border-t text-xs font-serif" style="border-color: var(--border-subtle);" id="mobileCategoryNav">
+      <!-- Injected by JS -->
+    </nav>
+  </header>
+
+
+  <!-- MAIN ARTICLE CONTAINER -->
+  <main class="flex-1 max-w-2xl w-full mx-auto px-6 py-16 sm:py-24">
+    
+    <article id="articleContentWrapper" class="animate-fadeIn flex flex-col gap-12">
+      
+      <!-- ARTICLE HERO: PURE HEADLINE EMPHASIS -->
+      <header class="space-y-6">
+        
+        <!-- Category & Order Breadcrumb -->
+        <div class="text-[11px] font-sans tracking-widest uppercase" style="color: var(--text-muted);" id="articleCategoryBreadcrumb">
+          문학의 심연 — 제 1편
+        </div>
+
+        <!-- Dominant Headline -->
+        <h1 id="articleTitle" class="article-headline text-2xl sm:text-4xl md:text-[2.5rem] tracking-tight" style="color: var(--text-primary);">
+          가닿을 수 없는 성(城), 관료제의 눈보라 속에서 영원히 조난당한 인간의 실존
+        </h1>
+
+        <!-- Poetic Subtitle -->
+        <p id="articleSubtitle" class="text-base sm:text-lg font-normal leading-relaxed italic" style="color: var(--accent);">
+          프란츠 카프카 《성》 — 누구도 최종 결정을 내리지 않는 침묵의 시스템 앞에서
+        </p>
+      </header>
+
+
+      <!-- MAIN LONG-FORM BODY -->
+      <div class="article-body font-serif" id="articleBody">
+        <!-- Injected long-form paragraphs -->
+      </div>
+
+
+      <!-- MINIMAL PULL-QUOTE -->
+      <figure class="my-8 py-8 px-6 sm:px-8 border-l-2" style="border-color: var(--accent); background-color: var(--accent-soft);">
+        <blockquote id="articleQuote" class="text-lg sm:text-xl font-normal leading-relaxed italic font-serif" style="color: var(--text-primary);">
+          <!-- Quote text -->
+        </blockquote>
+        <figcaption id="articleQuoteSource" class="text-xs font-sans mt-3 text-right italic font-medium" style="color: var(--accent);">
+          <!-- Source -->
+        </figcaption>
+      </figure>
+
+
+      <!-- REFLECTIVE INQUIRY & PRIVATE NOTE -->
+      <section class="mt-8 pt-10 border-t space-y-6" style="border-color: var(--border-subtle);">
+        <div class="space-y-2">
+          <span class="text-[11px] font-sans tracking-widest uppercase font-semibold" style="color: var(--accent);">
+            사유의 질문
+          </span>
+          <p id="articlePromptText" class="text-base sm:text-lg leading-relaxed italic font-serif" style="color: var(--text-secondary);">
+            <!-- Prompt -->
+          </p>
+        </div>
+
+        <!-- Subtle Private Ledger -->
+        <div class="pt-4 space-y-2">
+          <div class="flex items-center justify-between text-xs font-sans">
+            <span style="color: var(--text-muted);">나만의 사색 노트</span>
+            <span id="saveStatus" class="text-emerald-600 dark:text-emerald-400 opacity-0 transition-opacity">저장됨</span>
+          </div>
+
+          <textarea id="reflectionInput" rows="3" placeholder="떠오른 단상을 자유롭게 남겨보세요 (자동 저장)..." class="w-full p-3 rounded-lg border text-xs font-sans leading-relaxed focus:outline-none transition-all resize-none" style="background-color: var(--bg-surface); border-color: var(--border-subtle); color: var(--text-primary);"></textarea>
+        </div>
+      </section>
+
+
+      <!-- BOTTOM ESSAY NAVIGATION -->
+      <nav class="mt-12 pt-8 border-t flex items-center justify-between text-xs font-serif" style="border-color: var(--border-subtle);">
+        <button id="prevBtn" onclick="navigateArticle(-1)" class="hover:opacity-60 transition" style="color: var(--text-muted);">
+          ← 이전 글
+        </button>
+
+        <button id="nextBtn" onclick="navigateArticle(1)" class="font-medium hover:opacity-60 transition" style="color: var(--accent);">
+          <span id="nextBtnLabel">다음 글 읽기 →</span>
+        </button>
+      </nav>
+
+    </article>
+
+  </main>
+
+
+  <!-- FOOTER -->
+  <footer class="mt-auto py-12 text-center text-xs font-serif" style="color: var(--text-muted); border-top: 1px solid var(--border-subtle);">
+    <div class="max-w-2xl mx-auto px-6 space-y-1">
+      <div>ARCHE • 문학의 정원</div>
+      <div class="text-[11px] opacity-60">Every word echoes through time.</div>
+    </div>
+  </footer>
+
+
+  <!-- ALL-IN-ONE ZEN MENU & 25 ESSAYS MODAL -->
+  <div id="zenMenuModal" class="fixed inset-0 z-50 hidden">
+    <div id="zenBackdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeMenu()"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-full max-w-md shadow-2xl flex flex-col transition-transform transform translate-x-full duration-300" id="zenDrawer" style="background-color: var(--bg-card); border-left: 1px solid var(--border-subtle);">
+      
+      <!-- Drawer Header -->
+      <div class="p-6 border-b flex items-center justify-between" style="border-color: var(--border-subtle);">
+        <div>
+          <h2 class="font-title text-base font-semibold tracking-wider" style="color: var(--text-primary);">ARCHE 서재</h2>
+          <span class="text-xs font-serif" style="color: var(--text-muted);">25편의 에디토리얼 칼럼</span>
+        </div>
+        <button onclick="closeMenu()" class="p-1 hover:opacity-60" style="color: var(--text-secondary);">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Quick Preferences Bar (Theme, Font, Rain) -->
+      <div class="px-6 py-3 border-b flex items-center justify-between text-xs font-sans" style="border-color: var(--border-subtle); background-color: var(--bg-surface);">
+        <!-- Ambience -->
+        <button id="ambienceBtn" onclick="toggleAmbience()" class="flex items-center gap-1.5 py-1 px-2 rounded hover:opacity-70 transition" style="color: var(--text-secondary);">
+          <i data-lucide="volume-x" id="ambienceIcon" class="w-3.5 h-3.5"></i>
+          <span id="ambienceLabel">빗소리 켜기</span>
+        </button>
+
+        <!-- Font Zoom -->
+        <div class="flex items-center gap-1">
+          <button onclick="changeFontSize(-1)" class="px-1.5 py-0.5 hover:opacity-70">A-</button>
+          <span>/</span>
+          <button onclick="changeFontSize(1)" class="px-1.5 py-0.5 hover:opacity-70">A+</button>
+        </div>
+
+        <!-- Theme Picker -->
+        <div class="flex items-center gap-2">
+          <button onclick="setTheme('theme-paper')" title="종이책" class="w-4 h-4 rounded-full bg-[#F7F5F0] border border-[#DCD4C4]"></button>
+          <button onclick="setTheme('theme-dark')" title="심야 서재" class="w-4 h-4 rounded-full bg-[#131416] border border-[#2D313A]"></button>
+          <button onclick="setTheme('theme-light')" title="순백" class="w-4 h-4 rounded-full bg-[#FFFFFF] border border-[#E5E7EB]"></button>
+        </div>
+      </div>
+
+      <!-- Essays List by Category -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-8" id="zenEssayList">
+        <!-- Rendered by JS -->
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- SCRIPT -->
+  <script>
+    let columnsData = [];
+    let currentCategoryIndex = 0;
+    let currentArticleIndex = 0;
+    let currentFontSizeRem = 1.125;
+    let audioContext = null;
+    let isAmbiencePlaying = false;
+
+    const CATEGORIES = [
+      { id: '문학의 심연', label: '문학의 심연' },
+      { id: '시네마 & 대본의 시학', label: '시네마 & 대본' },
+      { id: '철학적 전율', label: '철학적 전율' },
+      { id: '칼럼 & 문화비평', label: '칼럼 & 비평' },
+      { id: '신화 & 영원의 기억', label: '신화 & 고전' },
+    ];
+
+    async function initApp() {
+      try {
+        const res = await fetch('data/columns_db.json');
+        if (res.ok) {
+          columnsData = await res.json();
+        }
+      } catch (err) {
+        console.warn("데이터 로드 실패", err);
+      }
+
+      renderCategoryNav();
+      loadStoredTheme();
+      renderCurrentArticle();
+      setupEventListeners();
+      lucide.createIcons();
+    }
+
+    function renderCategoryNav() {
+      const nav = document.getElementById('minimalCategoryNav');
+      const mobileNav = document.getElementById('mobileCategoryNav');
+
+      const html = CATEGORIES.map((cat, idx) => {
+        const isActive = idx === currentCategoryIndex;
+        return `
+          <button onclick="selectCategory(${idx})" 
+            class="transition-opacity hover:opacity-100 ${isActive ? 'font-bold opacity-100' : 'opacity-50'}"
+            style="color: ${isActive ? 'var(--accent)' : 'var(--text-primary)'};">
+            ${cat.label}
+          </button>
+        `;
+      }).join('');
+
+      nav.innerHTML = html;
+      mobileNav.innerHTML = html;
+    }
+
+    function selectCategory(idx) {
+      currentCategoryIndex = idx;
+      currentArticleIndex = 0;
+      renderCategoryNav();
+      renderCurrentArticle();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function getActiveCategoryArticles() {
+      const cat = CATEGORIES[currentCategoryIndex];
+      return columnsData.filter(item => item.category === cat.id);
+    }
+
+    function renderCurrentArticle() {
+      const articles = getActiveCategoryArticles();
+      const article = articles[currentArticleIndex];
+      if (!article) return;
+
+      const cat = CATEGORIES[currentCategoryIndex];
+
+      // Breadcrumb
+      document.getElementById('articleCategoryBreadcrumb').innerText = `${cat.label} — 제 ${article.order}편 (총 ${articles.length}편)`;
+
+      // Article animation
+      const wrapper = document.getElementById('articleContentWrapper');
+      wrapper.classList.remove('animate-fadeIn');
+      void wrapper.offsetWidth;
+      wrapper.classList.add('animate-fadeIn');
+
+      // Headline & Subtitle
+      document.getElementById('articleTitle').innerText = article.title;
+      document.getElementById('articleSubtitle').innerText = article.subtitle;
+
+      // Body paragraphs
+      const paras = article.content.split('\n\n');
+      let bodyHtml = '';
+      if (article.lead) {
+        bodyHtml += `<p class="article-lead">${article.lead}</p>`;
+      }
+      paras.forEach((p, idx) => {
+        if (idx === 0) {
+          bodyHtml += `<p class="article-dropcap">${p}</p>`;
+        } else {
+          bodyHtml += `<p>${p}</p>`;
+        }
+      });
+      document.getElementById('articleBody').innerHTML = bodyHtml;
+
+      // Quote
+      document.getElementById('articleQuote').innerText = article.key_quote;
+      document.getElementById('articleQuoteSource').innerText = `— ${article.key_quote_source}`;
+
+      // Prompt
+      document.getElementById('articlePromptText').innerText = article.reflection_prompt;
+
+      // Prev / Next button states
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtnLabel = document.getElementById('nextBtnLabel');
+
+      if (currentCategoryIndex === 0 && currentArticleIndex === 0) {
+        prevBtn.style.visibility = 'hidden';
+      } else {
+        prevBtn.style.visibility = 'visible';
+      }
+
+      if (currentArticleIndex === articles.length - 1) {
+        if (currentCategoryIndex < CATEGORIES.length - 1) {
+          nextBtnLabel.innerText = `다음 영역으로 (${CATEGORIES[currentCategoryIndex + 1].label}) →`;
+        } else {
+          nextBtnLabel.innerText = '첫 아티클로 돌아가기 ↺';
+        }
+      } else {
+        nextBtnLabel.innerText = '다음 글 읽기 →';
+      }
+
+      // Load Note
+      loadNote(article.id);
+      lucide.createIcons();
+    }
+
+    function goToArticle(catIdx, artIdx) {
+      currentCategoryIndex = catIdx;
+      currentArticleIndex = artIdx;
+      renderCategoryNav();
+      renderCurrentArticle();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function navigateArticle(dir) {
+      const articles = getActiveCategoryArticles();
+      let nextArtIdx = currentArticleIndex + dir;
+
+      if (nextArtIdx >= 0 && nextArtIdx < articles.length) {
+        currentArticleIndex = nextArtIdx;
+        renderCurrentArticle();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (nextArtIdx >= articles.length) {
+        if (currentCategoryIndex < CATEGORIES.length - 1) {
+          selectCategory(currentCategoryIndex + 1);
+        } else {
+          selectCategory(0);
+        }
+      } else if (nextArtIdx < 0 && currentCategoryIndex > 0) {
+        currentCategoryIndex--;
+        renderCategoryNav();
+        const prevArticles = getActiveCategoryArticles();
+        currentArticleIndex = prevArticles.length - 1;
+        renderCurrentArticle();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function changeFontSize(delta) {
+      currentFontSizeRem = Math.min(1.4, Math.max(0.95, currentFontSizeRem + (delta * 0.05)));
+      document.documentElement.style.setProperty('--article-font-size', `${currentFontSizeRem}rem`);
+    }
+
+    function loadNote(id) {
+      const note = localStorage.getItem(`arche_note_v3_${id}`) || '';
+      document.getElementById('reflectionInput').value = note;
+    }
+
+    function saveCurrentNote() {
+      const articles = getActiveCategoryArticles();
+      const article = articles[currentArticleIndex];
+      if (!article) return;
+
+      const val = document.getElementById('reflectionInput').value;
+      localStorage.setItem(`arche_note_v3_${article.id}`, val);
+
+      const status = document.getElementById('saveStatus');
+      status.classList.remove('opacity-0');
+      status.classList.add('opacity-100');
+      setTimeout(() => {
+        status.classList.remove('opacity-100');
+        status.classList.add('opacity-0');
+      }, 1500);
+    }
+
+    function setTheme(theme) {
+      document.documentElement.className = theme;
+      localStorage.setItem('arche_theme_v3', theme);
+    }
+
+    function loadStoredTheme() {
+      const stored = localStorage.getItem('arche_theme_v3') || 'theme-paper';
+      setTheme(stored);
+    }
+
+    // Ambience
+    function toggleAmbience() {
+      if (!isAmbiencePlaying) {
+        startAmbience();
+      } else {
+        stopAmbience();
+      }
+    }
+
+    function startAmbience() {
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+
+        const bufferSize = audioContext.sampleRate * 2;
+        const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.04;
+          b6 = white * 0.115926;
+        }
+
+        const whiteNoise = audioContext.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = audioContext.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 700;
+
+        const gainNode = audioContext.createGain();
+        gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
+
+        whiteNoise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        whiteNoise.start();
+        window._ambienceSource = whiteNoise;
+        isAmbiencePlaying = true;
+
+        document.getElementById('ambienceIcon').setAttribute('data-lucide', 'volume-2');
+        document.getElementById('ambienceLabel').innerText = '빗소리 끄기';
+        lucide.createIcons();
+      } catch (err) {
+        console.error("Audio error", err);
+      }
+    }
+
+    function stopAmbience() {
+      if (window._ambienceSource) {
+        window._ambienceSource.stop();
+        window._ambienceSource.disconnect();
+      }
+      isAmbiencePlaying = false;
+      document.getElementById('ambienceIcon').setAttribute('data-lucide', 'volume-x');
+      document.getElementById('ambienceLabel').innerText = '빗소리 켜기';
+      lucide.createIcons();
+    }
+
+    // Zen Drawer
+    function openMenu() {
+      const container = document.getElementById('zenEssayList');
+      container.innerHTML = CATEGORIES.map((cat, cIdx) => {
+        const catArticles = columnsData.filter(c => c.category === cat.id);
+        return `
+          <div>
+            <h3 class="font-serif text-xs uppercase font-bold tracking-widest mb-3 opacity-60" style="color: var(--accent);">
+              ${cat.label}
+            </h3>
+            <div class="space-y-3">
+              ${catArticles.map((a, aIdx) => `
+                <div onclick="goToArticle(${cIdx}, ${aIdx}); closeMenu();" class="cursor-pointer group">
+                  <div class="text-xs sm:text-sm font-serif font-medium leading-snug group-hover:text-amber-800 transition" style="color: var(--text-primary);">
+                    ${a.order}. ${a.title}
+                  </div>
+                  <div class="text-[11px] font-sans italic opacity-60 mt-0.5" style="color: var(--text-muted);">
+                    ${a.author_topic}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('zenMenuModal').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('zenDrawer').classList.remove('translate-x-full');
+      }, 20);
+      lucide.createIcons();
+    }
+
+    function closeMenu() {
+      document.getElementById('zenDrawer').classList.add('translate-x-full');
+      setTimeout(() => {
+        document.getElementById('zenMenuModal').classList.add('hidden');
+      }, 300);
+    }
+
+    function setupEventListeners() {
+      let timer = null;
+      document.getElementById('reflectionInput').addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(saveCurrentNote, 500);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
