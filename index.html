@@ -419,10 +419,27 @@
 
     function selectCategory(idx) {
       currentCategoryIndex = idx;
-      currentArticleIndex = 0;
+      currentArticleIndex = findLatestIndexInCategory(idx);
       renderCategoryNav();
       renderCurrentArticle();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function findLatestIndexInCategory(catIdx) {
+      const cat = CATEGORIES[catIdx];
+      if (!cat) return 0;
+      const catArticles = columnsData.filter(c => c.category === cat.id);
+      if (!catArticles.length) return 0;
+      let latestIdx = 0;
+      let latestDate = catArticles[0].date_added || '0000-00-00';
+      catArticles.forEach((a, i) => {
+        const d = a.date_added || '0000-00-00';
+        if (d > latestDate) {
+          latestDate = d;
+          latestIdx = i;
+        }
+      });
+      return latestIdx;
     }
 
     function getActiveCategoryArticles() {
