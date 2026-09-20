@@ -363,7 +363,7 @@
 
     async function initApp() {
       try {
-        const res = await fetch('data/columns_db.json');
+        const res = await fetch(`data/columns_db.json?v=${Date.now()}`, { cache: 'no-store' });
         if (res.ok) {
           columnsData = await res.json();
         }
@@ -371,7 +371,7 @@
         console.warn("데이터 로드 실패", err);
       }
 
-      const matchedHash = resolveArticleFromHash();
+      const matchedHash = history.state?.archeAutoHash ? false : resolveArticleFromHash();
       if (!matchedHash) {
         resolveLatestArticle();
       }
@@ -539,7 +539,7 @@
       if (!articleId) return;
       const newHash = '#' + encodeURIComponent(articleId);
       if (location.hash !== newHash) {
-        history.replaceState(null, '', newHash);
+        history.replaceState({ archeAutoHash: true }, '', newHash);
       }
     }
 
