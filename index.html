@@ -131,6 +131,84 @@
       border-radius: 2px;
     }
 
+    .reading-progress-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      background: transparent;
+      overflow: hidden;
+    }
+    .reading-progress-bar {
+      width: 0%;
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.12s linear;
+    }
+    .category-nav-button {
+      position: relative;
+      border-radius: 999px;
+      padding: 0.42rem 0.65rem;
+      white-space: nowrap;
+    }
+    .category-nav-button.is-active {
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px var(--border-subtle);
+    }
+    .category-nav-button .new-dot {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      margin-left: 5px;
+      border-radius: 999px;
+      background: var(--accent);
+      vertical-align: middle;
+    }
+    #mobileCategoryNav {
+      scroll-snap-type: x proximity;
+      -webkit-mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%);
+      mask-image: linear-gradient(to right, #000 0%, #000 88%, transparent 100%);
+    }
+    #mobileCategoryNav .category-nav-button {
+      min-height: 40px;
+      scroll-snap-align: center;
+      display: inline-flex;
+      align-items: center;
+    }
+    .today-card {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-surface);
+      border-radius: 0.85rem;
+      padding: 1rem;
+      transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .today-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .today-card.is-read { opacity: 0.62; }
+    .today-signal {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    body.modal-open { overflow: hidden; }
+    @media (max-width: 640px) {
+      .article-body p {
+        text-align: left;
+        line-height: 2.05;
+        font-size: var(--article-font-size, 1.06rem);
+      }
+      .article-lead { font-size: 1.12rem; line-height: 1.95; }
+      .article-dropcap::first-letter { font-size: 3.1rem; }
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -152,13 +230,21 @@
       </a>
 
       <!-- Minimal 5 Category Navigation (Inline) -->
-      <nav class="hidden md:flex items-center space-x-6 text-xs sm:text-sm font-serif" id="minimalCategoryNav">
+      <nav class="hidden md:flex items-center gap-0.5 text-[11px] font-serif" id="minimalCategoryNav">
         <!-- Injected by JS -->
       </nav>
 
-      <!-- Right Zen Drawer Trigger -->
-      <div class="flex items-center space-x-4 text-xs font-serif">
-        <button onclick="openMenu()" class="flex items-center gap-1.5 py-1 px-2 hover:opacity-60 transition text-xs" style="color: var(--text-secondary);">
+      <!-- Daily discovery, search and library -->
+      <div class="flex items-center gap-1 sm:gap-2 text-xs font-serif">
+        <button onclick="openToday()" class="flex items-center gap-1.5 py-2 px-2 rounded-full hover:opacity-70 transition" style="color: var(--accent); background: var(--accent-soft);" title="오늘 새로 올라온 글 보기">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          <span>오늘</span>
+          <span id="headerTodayCount" class="font-sans text-[10px]"></span>
+        </button>
+        <button onclick="openSearch()" class="p-2 rounded-full hover:opacity-60 transition" style="color: var(--text-secondary);" title="글과 시대의 신호 검색" aria-label="검색 열기">
+          <i data-lucide="search" class="w-4 h-4"></i>
+        </button>
+        <button onclick="openMenu()" class="flex items-center gap-1.5 py-2 px-2 hover:opacity-60 transition" style="color: var(--text-secondary);">
           <i data-lucide="menu" class="w-4 h-4"></i>
           <span>서재</span>
         </button>
@@ -167,9 +253,10 @@
     </div>
 
     <!-- Mobile Category Scroller (Only on small screens) -->
-    <nav class="md:hidden flex items-center space-x-5 overflow-x-auto no-scrollbar px-6 py-2 border-t text-xs font-serif" style="border-color: var(--border-subtle);" id="mobileCategoryNav">
+    <nav class="md:hidden flex items-center gap-1 overflow-x-auto no-scrollbar px-4 py-1 border-t text-xs font-serif" style="border-color: var(--border-subtle);" id="mobileCategoryNav">
       <!-- Injected by JS -->
     </nav>
+    <div class="reading-progress-track" aria-hidden="true"><div id="readingProgressBar" class="reading-progress-bar"></div></div>
   </header>
 
 
@@ -178,6 +265,15 @@
     
     <article id="articleContentWrapper" class="animate-fadeIn flex flex-col gap-12">
       
+      <!-- DAILY CONTEXT: makes the return path explicit -->
+      <div id="todayContextBar" class="flex items-center justify-between gap-4 pb-4 border-b text-xs font-sans" style="border-color: var(--border-subtle); color: var(--text-muted);">
+        <button onclick="openToday()" class="flex items-center gap-2 hover:opacity-70 transition text-left">
+          <span class="inline-flex items-center gap-1.5 font-medium" style="color: var(--accent);"><i data-lucide="calendar-days" class="w-3.5 h-3.5"></i><span id="todayContextLabel">오늘의 ARCHE</span></span>
+          <span id="todayContextCount"></span>
+        </button>
+        <span id="todayReadProgress" class="shrink-0"></span>
+      </div>
+
       <!-- ARTICLE HERO: PURE HEADLINE EMPHASIS -->
       <header class="space-y-6">
         
@@ -186,10 +282,11 @@
           <div class="text-[11px] font-sans tracking-widest uppercase flex items-center gap-2 flex-wrap" style="color: var(--text-muted);" id="articleCategoryBreadcrumb">
             문학의 심연 — 제 1편
             <span id="articleDateBadge" class="px-1.5 py-0.5 rounded-full text-[10px] normal-case tracking-normal" style="background-color: var(--accent-soft); color: var(--accent);"></span>
+            <span id="articleReadTime" class="text-[10px] normal-case tracking-normal"></span>
           </div>
           <button onclick="copyArticleLink()" class="flex items-center gap-1 text-[11px] font-sans hover:opacity-60 transition shrink-0" style="color: var(--text-muted);">
             <i data-lucide="link-2" class="w-3.5 h-3.5"></i>
-            <span id="shareLinkLabel">링크 복사</span>
+            <span id="shareLinkLabel">공유</span>
           </button>
         </div>
 
@@ -259,13 +356,25 @@
       </section>
 
 
+      <!-- TODAY'S CONNECTED DISCOVERIES -->
+      <section id="todayMoreSection" class="mt-8 pt-10 border-t space-y-5" style="border-color: var(--border-subtle);">
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <span class="text-[11px] font-sans tracking-widest uppercase font-semibold" style="color: var(--accent);">오늘의 다른 시선</span>
+            <p class="text-sm font-serif mt-1" style="color: var(--text-secondary);">다른 텍스트가 같은 시대를 어떻게 읽는지 이어서 살펴보세요.</p>
+          </div>
+          <button onclick="openToday()" class="text-xs font-sans shrink-0 hover:opacity-60" style="color: var(--accent);">전체 목차</button>
+        </div>
+        <div id="todayMoreList" class="grid gap-3"></div>
+      </section>
+
       <!-- BOTTOM ESSAY NAVIGATION -->
-      <nav class="mt-12 pt-8 border-t flex items-center justify-between text-xs font-serif" style="border-color: var(--border-subtle);">
-        <button id="prevBtn" onclick="navigateArticle(-1)" class="hover:opacity-60 transition" style="color: var(--text-muted);">
+      <nav class="mt-12 pt-8 border-t grid grid-cols-3 items-center text-xs font-serif gap-2" style="border-color: var(--border-subtle);">
+        <button id="prevBtn" onclick="navigateArticle(-1)" class="text-left hover:opacity-60 transition" style="color: var(--text-muted);">
           ← 이전 글
         </button>
-
-        <button id="nextBtn" onclick="navigateArticle(1)" class="font-medium hover:opacity-60 transition" style="color: var(--accent);">
+        <button onclick="openToday()" class="text-center hover:opacity-60 transition" style="color: var(--text-muted);">오늘의 목차</button>
+        <button id="nextBtn" onclick="navigateArticle(1)" class="text-right font-medium hover:opacity-60 transition" style="color: var(--accent);">
           <span id="nextBtnLabel">다음 글 읽기 →</span>
         </button>
       </nav>
@@ -283,6 +392,27 @@
     </div>
   </footer>
 
+
+  <!-- TODAY'S EDITION OVERVIEW -->
+  <div id="todayModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="todayModalTitle">
+    <div class="absolute inset-0 bg-black/45 backdrop-blur-sm" onclick="closeToday()"></div>
+    <div id="todayPanel" class="absolute inset-x-0 bottom-0 sm:inset-6 lg:inset-10 max-w-5xl lg:mx-auto rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden" style="background-color: var(--bg-card); max-height: 92vh; border: 1px solid var(--border-subtle);">
+      <div class="p-5 sm:p-7 border-b flex items-start justify-between gap-5" style="border-color: var(--border-subtle);">
+        <div>
+          <div class="flex items-center gap-2 mb-2 text-[11px] font-sans tracking-widest uppercase" style="color: var(--accent);"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>오늘의 에디션</div>
+          <h2 id="todayModalTitle" class="font-title text-xl sm:text-2xl font-semibold tracking-wide" style="color: var(--text-primary);">오늘의 ARCHE</h2>
+          <p id="todayModalMeta" class="text-xs sm:text-sm font-serif mt-2" style="color: var(--text-secondary);"></p>
+        </div>
+        <button onclick="closeToday()" class="p-2 rounded-full hover:opacity-60" style="color: var(--text-secondary);" aria-label="오늘의 목차 닫기"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="overflow-y-auto p-5 sm:p-7">
+        <div class="mb-6 p-4 rounded-xl text-sm font-serif leading-relaxed" style="background: var(--accent-soft); color: var(--text-secondary);">
+          고전과 동시대의 텍스트를 통해 오늘의 사건을 읽습니다. 제목 아래의 문장은 각 글이 포착한 <strong style="color: var(--accent);">시대의 신호</strong>입니다.
+        </div>
+        <div id="todayEditionList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ALL-IN-ONE ZEN MENU & 25 ESSAYS MODAL -->
   <div id="zenMenuModal" class="fixed inset-0 z-50 hidden">
@@ -332,6 +462,9 @@
         </div>
       </div>
 
+      <!-- Combinable category filters -->
+      <div id="zenCategoryFilters" class="px-6 pb-3 flex gap-2 overflow-x-auto no-scrollbar text-[10px] font-sans"></div>
+
       <!-- Essays List by Category -->
       <div class="flex-1 overflow-y-auto p-6 pt-2 space-y-8" id="zenEssayList">
         <!-- Rendered by JS -->
@@ -349,6 +482,9 @@
     let currentFontSizeRem = 1.125;
     let audioContext = null;
     let isAmbiencePlaying = false;
+    let zenCategoryFilter = 'all';
+    let latestEditionDate = '';
+    let lastRenderedArticleId = '';
 
     const CATEGORIES = [
       { id: '문학의 심연', label: '문학의 심연' },
@@ -362,6 +498,62 @@
       { id: '매거진 & 씬', label: '매거진 & 씬' },
     ];
 
+    function getLatestDate() {
+      const dates = columnsData.map(a => a.date_added).filter(Boolean).sort();
+      return dates.length ? dates[dates.length - 1] : '';
+    }
+
+    function getEditionArticles(dateStr) {
+      const categoryIndexMap = {};
+      CATEGORIES.forEach((cat, idx) => { categoryIndexMap[cat.id] = idx; });
+      return columnsData.filter(a => a.date_added === dateStr).sort((a, b) => {
+        const catDiff = (categoryIndexMap[a.category] ?? 99) - (categoryIndexMap[b.category] ?? 99);
+        return catDiff || ((a.order || 0) - (b.order || 0));
+      });
+    }
+
+    function getReadIds() {
+      try { return JSON.parse(localStorage.getItem('arche_read_v1') || '[]'); }
+      catch (err) { return []; }
+    }
+
+    function isArticleRead(id) { return getReadIds().includes(id); }
+
+    function markArticleRead(id) {
+      if (!id) return;
+      const ids = getReadIds();
+      if (!ids.includes(id)) {
+        ids.push(id);
+        localStorage.setItem('arche_read_v1', JSON.stringify(ids.slice(-300)));
+        updateTodayContext();
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[ch]));
+    }
+
+    function signalExcerpt(value, maxLen = 118) {
+      const text = String(value || '').replace(/s+/g, ' ').trim();
+      return text.length > maxLen ? text.slice(0, maxLen).trim() + '…' : text;
+    }
+
+    function findArticleLocation(id) {
+      for (let cIdx = 0; cIdx < CATEGORIES.length; cIdx++) {
+        const catArticles = columnsData.filter(c => c.category === CATEGORIES[cIdx].id);
+        const aIdx = catArticles.findIndex(a => a.id === id);
+        if (aIdx !== -1) return { cIdx, aIdx };
+      }
+      return null;
+    }
+
+    function openArticleById(id, closeOverlays = true) {
+      const loc = findArticleLocation(id);
+      if (!loc) return;
+      if (closeOverlays) { closeToday(); closeMenu(); }
+      goToArticle(loc.cIdx, loc.aIdx, true);
+    }
+
     async function initApp() {
       try {
         const res = await fetch(`data/columns_db.json?v=${Date.now()}`, { cache: 'no-store' });
@@ -372,16 +564,21 @@
         console.warn("데이터 로드 실패", err);
       }
 
+      latestEditionDate = getLatestDate();
       const matchedHash = history.state?.archeAutoHash ? false : resolveArticleFromHash();
-      if (!matchedHash) {
-        resolveLatestArticle();
-      }
+      if (!matchedHash) resolveLatestArticle();
       renderCategoryNav();
       loadStoredTheme();
-      renderCurrentArticle();
+      renderCurrentArticle(matchedHash ? 'none' : 'replace');
       updateLibraryMeta();
       setupEventListeners();
+      updateReadingProgress();
       lucide.createIcons();
+      const editionSeenKey = 'arche_seen_edition_' + latestEditionDate;
+      if (latestEditionDate && !localStorage.getItem(editionSeenKey)) {
+        localStorage.setItem(editionSeenKey, '1');
+        setTimeout(openToday, 550);
+      }
     }
 
     function formatDate(dateStr) {
@@ -394,6 +591,9 @@
       const totalEl = document.getElementById('zenTotalCount');
       const lastUpdatedEl = document.getElementById('zenLastUpdated');
       if (totalEl) totalEl.innerText = `${columnsData.length}편의 에디토리얼 칼럼`;
+      const todayCountEl = document.getElementById('headerTodayCount');
+      const editionCount = getEditionArticles(latestEditionDate || getLatestDate()).length;
+      if (todayCountEl) todayCountEl.innerText = editionCount ? String(editionCount) : '';
       if (lastUpdatedEl) {
         const dates = columnsData.map(a => a.date_added).filter(Boolean).sort();
         const latest = dates[dates.length - 1];
@@ -408,23 +608,27 @@
       const html = CATEGORIES.map((cat, idx) => {
         const isActive = idx === currentCategoryIndex;
         return `
-          <button onclick="selectCategory(${idx})" 
-            class="transition-opacity hover:opacity-100 ${isActive ? 'font-bold opacity-100' : 'opacity-50'}"
+          <button onclick="selectCategory(${idx}, true)" data-category-index="${idx}"
+            class="category-nav-button transition-opacity hover:opacity-100 ${isActive ? 'is-active font-bold opacity-100' : 'opacity-60'}"
             style="color: ${isActive ? 'var(--accent)' : 'var(--text-primary)'};">
-            ${cat.label}
+            ${cat.label}${columnsData.some(a => a.category === cat.id && a.date_added === latestEditionDate) ? '<span class="new-dot" title="오늘 새 글"></span>' : ''}
           </button>
         `;
       }).join('');
 
       nav.innerHTML = html;
       mobileNav.innerHTML = html;
+      requestAnimationFrame(() => {
+        const activeMobile = mobileNav.querySelector('[data-category-index="' + currentCategoryIndex + '"]');
+        if (activeMobile) activeMobile.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      });
     }
 
-    function selectCategory(idx) {
+    function selectCategory(idx, pushHistory = true) {
       currentCategoryIndex = idx;
       currentArticleIndex = findLatestIndexInCategory(idx);
       renderCategoryNav();
-      renderCurrentArticle();
+      renderCurrentArticle(pushHistory ? 'push' : 'replace');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -450,7 +654,7 @@
       return columnsData.filter(item => item.category === cat.id);
     }
 
-    function renderCurrentArticle() {
+    function renderCurrentArticle(urlMode = 'replace') {
       const articles = getActiveCategoryArticles();
       const article = articles[currentArticleIndex];
       if (!article) return;
@@ -476,6 +680,8 @@
       // Headline & Subtitle
       document.getElementById('articleTitle').innerText = article.title;
       document.getElementById('articleSubtitle').innerText = article.subtitle;
+      document.getElementById('articleReadTime').innerText = article.read_time || '';
+      document.title = article.title + ' | ARCHE';
 
       // Body paragraphs
       const paras = article.content.split('\n\n');
@@ -509,38 +715,60 @@
       }
 
       // Sync shareable URL (deep link to this article)
-      updateUrlHash(article.id);
+      updateUrlHash(article.id, urlMode);
 
-      // Prev / Next button states
+      // Reading flow: today's edition is a deliberate 9-part sequence
       const prevBtn = document.getElementById('prevBtn');
       const nextBtnLabel = document.getElementById('nextBtnLabel');
+      const edition = getEditionArticles(article.date_added);
+      const editionIndex = edition.findIndex(a => a.id === article.id);
+      const isLatestEdition = article.date_added === latestEditionDate && editionIndex !== -1;
 
-      if (currentCategoryIndex === 0 && currentArticleIndex === 0) {
-        prevBtn.style.visibility = 'hidden';
-      } else {
+      if (isLatestEdition) {
         prevBtn.style.visibility = 'visible';
-      }
-
-      if (currentArticleIndex === articles.length - 1) {
-        if (currentCategoryIndex < CATEGORIES.length - 1) {
-          nextBtnLabel.innerText = `다음 영역으로 (${CATEGORIES[currentCategoryIndex + 1].label}) →`;
+        if (editionIndex === 0) {
+          prevBtn.innerText = '← 오늘의 목차';
         } else {
-          nextBtnLabel.innerText = '첫 아티클로 돌아가기 ↺';
+          const prevCat = CATEGORIES.find(c => c.id === edition[editionIndex - 1].category);
+          prevBtn.innerText = '← ' + ((prevCat && prevCat.label) || '이전 글');
+        }
+        if (editionIndex === edition.length - 1) {
+          nextBtnLabel.innerText = '오늘의 목차로 돌아가기 ↺';
+        } else {
+          const nextCat = CATEGORIES.find(c => c.id === edition[editionIndex + 1].category);
+          nextBtnLabel.innerText = '오늘의 다음 글 (' + ((nextCat && nextCat.label) || '') + ') →';
         }
       } else {
-        nextBtnLabel.innerText = '다음 글 읽기 →';
+        prevBtn.innerText = '← 이전 글';
+        prevBtn.style.visibility = (currentCategoryIndex === 0 && currentArticleIndex === 0) ? 'hidden' : 'visible';
+        if (currentArticleIndex === articles.length - 1) {
+          nextBtnLabel.innerText = currentCategoryIndex < CATEGORIES.length - 1
+            ? '다음 영역으로 (' + CATEGORIES[currentCategoryIndex + 1].label + ') →'
+            : '최신 글로 돌아가기 ↺';
+        } else {
+          nextBtnLabel.innerText = '다음 글 읽기 →';
+        }
       }
+
+      lastRenderedArticleId = article.id;
+      localStorage.setItem('arche_last_article_v1', article.id);
+      updateTodayContext();
+      renderTodayMore(article);
+      requestAnimationFrame(updateReadingProgress);
 
       // Load Note
       loadNote(article.id);
       lucide.createIcons();
     }
 
-    function updateUrlHash(articleId) {
-      if (!articleId) return;
+    function updateUrlHash(articleId, mode = 'replace') {
+      if (!articleId || mode === 'none') return;
       const newHash = '#' + encodeURIComponent(articleId);
-      if (location.hash !== newHash) {
-        history.replaceState({ archeAutoHash: true }, '', newHash);
+      const state = { archeAutoHash: true, articleId };
+      if (mode === 'push' && location.hash !== newHash) {
+        history.pushState(state, '', newHash);
+      } else {
+        history.replaceState(state, '', newHash);
       }
     }
 
@@ -579,54 +807,74 @@
     function goToLatestArticle() {
       resolveLatestArticle();
       renderCategoryNav();
-      renderCurrentArticle();
+      renderCurrentArticle('push');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function copyArticleLink() {
-      const url = location.href;
+    async function copyArticleLink() {
+      const articles = getActiveCategoryArticles();
+      const article = articles[currentArticleIndex];
+      if (!article) return;
+      const shareUrl = new URL(location.href);
+      shareUrl.search = '';
+      shareUrl.hash = '#' + encodeURIComponent(article.id);
       const label = document.getElementById('shareLinkLabel');
       const finish = (text) => {
         if (!label) return;
         label.innerText = text;
-        setTimeout(() => { label.innerText = '링크 복사'; }, 1500);
+        setTimeout(() => { label.innerText = '공유'; }, 1500);
       };
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: article.title + ' | ARCHE', text: article.subtitle, url: shareUrl.toString() });
+          finish('공유 완료');
+          return;
+        } catch (err) {
+          if (err && err.name === 'AbortError') return;
+        }
+      }
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(() => finish('복사 완료!')).catch(() => finish('복사 실패'));
+        navigator.clipboard.writeText(shareUrl.toString()).then(() => finish('링크 복사 완료')).catch(() => finish('복사 실패'));
       } else {
         finish('복사 실패');
       }
     }
 
-    function goToArticle(catIdx, artIdx) {
+    function goToArticle(catIdx, artIdx, pushHistory = true) {
       currentCategoryIndex = catIdx;
       currentArticleIndex = artIdx;
       renderCategoryNav();
-      renderCurrentArticle();
+      renderCurrentArticle(pushHistory ? 'push' : 'replace');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function navigateArticle(dir) {
       const articles = getActiveCategoryArticles();
-      let nextArtIdx = currentArticleIndex + dir;
+      const article = articles[currentArticleIndex];
+      if (!article) return;
 
-      if (nextArtIdx >= 0 && nextArtIdx < articles.length) {
-        currentArticleIndex = nextArtIdx;
-        renderCurrentArticle();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (nextArtIdx >= articles.length) {
-        if (currentCategoryIndex < CATEGORIES.length - 1) {
-          selectCategory(currentCategoryIndex + 1);
-        } else {
-          selectCategory(0);
+      const edition = getEditionArticles(article.date_added);
+      const editionIndex = edition.findIndex(a => a.id === article.id);
+      if (article.date_added === latestEditionDate && editionIndex !== -1) {
+        const targetIndex = editionIndex + dir;
+        if (targetIndex < 0 || targetIndex >= edition.length) {
+          openToday();
+          return;
         }
+        openArticleById(edition[targetIndex].id, false);
+        return;
+      }
+
+      let nextArtIdx = currentArticleIndex + dir;
+      if (nextArtIdx >= 0 && nextArtIdx < articles.length) {
+        goToArticle(currentCategoryIndex, nextArtIdx, true);
+      } else if (nextArtIdx >= articles.length) {
+        if (currentCategoryIndex < CATEGORIES.length - 1) selectCategory(currentCategoryIndex + 1, true);
+        else goToLatestArticle();
       } else if (nextArtIdx < 0 && currentCategoryIndex > 0) {
         currentCategoryIndex--;
-        renderCategoryNav();
         const prevArticles = getActiveCategoryArticles();
-        currentArticleIndex = prevArticles.length - 1;
-        renderCurrentArticle();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        goToArticle(currentCategoryIndex, prevArticles.length - 1, true);
       }
     }
 
@@ -739,7 +987,118 @@
       lucide.createIcons();
     }
 
+    function updateTodayContext() {
+      const articles = getActiveCategoryArticles();
+      const article = articles[currentArticleIndex];
+      if (!article) return;
+      const edition = getEditionArticles(article.date_added);
+      const readCount = edition.filter(a => isArticleRead(a.id)).length;
+      const label = document.getElementById('todayContextLabel');
+      const count = document.getElementById('todayContextCount');
+      const progress = document.getElementById('todayReadProgress');
+      if (label) label.innerText = article.date_added === latestEditionDate ? '오늘의 ARCHE' : formatDate(article.date_added) + ' 에디션';
+      if (count) count.innerText = edition.length + '편';
+      if (progress) progress.innerText = readCount + ' / ' + edition.length + ' 읽음';
+    }
+
+    function renderTodayMore(article) {
+      const container = document.getElementById('todayMoreList');
+      const section = document.getElementById('todayMoreSection');
+      if (!container || !section || !article) return;
+      const edition = getEditionArticles(article.date_added);
+      const currentIndex = edition.findIndex(a => a.id === article.id);
+      const others = [];
+      for (let step = 1; step < edition.length && others.length < 3; step++) {
+        const candidate = edition[(currentIndex + step) % edition.length];
+        if (candidate && candidate.id !== article.id) others.push(candidate);
+      }
+      section.classList.toggle('hidden', others.length === 0);
+      container.innerHTML = others.map(a => {
+        const cat = CATEGORIES.find(c => c.id === a.category);
+        return '<button class="today-card ' + (isArticleRead(a.id) ? 'is-read' : '') + '" data-article-id="' + escapeHtml(a.id) + '" onclick="openArticleById(this.dataset.articleId)">' +
+          '<div class="flex items-center justify-between gap-3 mb-2"><span class="text-[10px] font-sans uppercase tracking-wider" style="color: var(--accent);">' + escapeHtml((cat && cat.label) || a.category) + '</span><span class="text-[10px] font-sans" style="color: var(--text-muted);">' + escapeHtml(a.read_time || '') + '</span></div>' +
+          '<div class="text-sm font-serif font-semibold leading-relaxed" style="color: var(--text-primary);">' + escapeHtml(a.title) + '</div>' +
+          '<div class="today-signal text-xs font-serif leading-relaxed mt-2" style="color: var(--text-secondary);">' + escapeHtml(signalExcerpt(a.zeitgeist_connection)) + '</div>' +
+          '</button>';
+      }).join('');
+    }
+
+    function renderTodayEdition() {
+      const edition = getEditionArticles(latestEditionDate || getLatestDate());
+      const container = document.getElementById('todayEditionList');
+      const meta = document.getElementById('todayModalMeta');
+      const readCount = edition.filter(a => isArticleRead(a.id)).length;
+      if (meta) meta.innerText = formatDate(latestEditionDate) + ' · ' + edition.length + '편 · ' + readCount + '편 읽음';
+      if (!container) return;
+      container.innerHTML = edition.map((a, idx) => {
+        const cat = CATEGORIES.find(c => c.id === a.category);
+        const read = isArticleRead(a.id);
+        return '<button class="today-card ' + (read ? 'is-read' : '') + '" data-article-id="' + escapeHtml(a.id) + '" onclick="openArticleById(this.dataset.articleId)">' +
+          '<div class="flex items-center justify-between gap-3 mb-2"><span class="text-[10px] font-sans uppercase tracking-wider" style="color: var(--accent);">' + String(idx + 1).padStart(2, '0') + ' · ' + escapeHtml((cat && cat.label) || a.category) + '</span><span class="text-[10px] font-sans" style="color: var(--text-muted);">' + (read ? '읽음' : escapeHtml(a.read_time || '')) + '</span></div>' +
+          '<div class="text-sm sm:text-base font-serif font-semibold leading-relaxed" style="color: var(--text-primary);">' + escapeHtml(a.title) + '</div>' +
+          '<div class="text-[11px] font-sans italic mt-1" style="color: var(--text-muted);">' + escapeHtml(a.author_topic) + '</div>' +
+          '<div class="today-signal text-xs font-serif leading-relaxed mt-3 pt-3 border-t" style="color: var(--text-secondary); border-color: var(--border-subtle);">' + escapeHtml(signalExcerpt(a.zeitgeist_connection, 150)) + '</div>' +
+          '</button>';
+      }).join('');
+    }
+
+    function openToday() {
+      closeMenu();
+      renderTodayEdition();
+      const modal = document.getElementById('todayModal');
+      if (modal) modal.classList.remove('hidden');
+      document.body.classList.add('modal-open');
+      lucide.createIcons();
+    }
+
+    function closeToday() {
+      const modal = document.getElementById('todayModal');
+      if (modal) modal.classList.add('hidden');
+      if (document.getElementById('zenMenuModal').classList.contains('hidden')) document.body.classList.remove('modal-open');
+    }
+
+    function openSearch() {
+      openMenu();
+      setTimeout(() => { const input = document.getElementById('zenSearchInput'); if (input) input.focus(); }, 340);
+    }
+
+    function updateReadingProgress() {
+      const wrapper = document.getElementById('articleContentWrapper');
+      const bar = document.getElementById('readingProgressBar');
+      if (!wrapper || !bar) return;
+      const top = wrapper.offsetTop;
+      const height = Math.max(wrapper.offsetHeight, 1);
+      const seen = window.scrollY + window.innerHeight - top;
+      const progress = Math.max(0, Math.min(1, seen / height));
+      bar.style.width = (progress * 100).toFixed(1) + '%';
+      if (progress >= 0.85 && lastRenderedArticleId) markArticleRead(lastRenderedArticleId);
+    }
+
+    function handleHistoryNavigation() {
+      if (!resolveArticleFromHash()) resolveLatestArticle();
+      renderCategoryNav();
+      renderCurrentArticle('none');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
     // Zen Drawer
+    function renderZenCategoryFilters() {
+      const container = document.getElementById('zenCategoryFilters');
+      if (!container) return;
+      const options = [{ id: 'all', label: '전체' }].concat(CATEGORIES);
+      container.innerHTML = options.map(option => {
+        const active = zenCategoryFilter === option.id;
+        return '<button onclick="setZenCategoryFilter(this.dataset.category)" data-category="' + escapeHtml(option.id) + '" class="px-2.5 py-1.5 rounded-full border shrink-0 ' + (active ? 'font-semibold' : 'opacity-60') + '" style="border-color: ' + (active ? 'var(--accent)' : 'var(--border-subtle)') + '; color: ' + (active ? 'var(--accent)' : 'var(--text-secondary)') + '; background: ' + (active ? 'var(--accent-soft)' : 'transparent') + ';">' + escapeHtml(option.label) + '</button>';
+      }).join('');
+    }
+
+    function setZenCategoryFilter(category) {
+      zenCategoryFilter = category || 'all';
+      renderZenCategoryFilters();
+      const input = document.getElementById('zenSearchInput');
+      renderZenList(input ? input.value : '');
+    }
+
     function renderZenList(query) {
       const q = (query || '').trim().toLowerCase();
       const container = document.getElementById('zenEssayList');
@@ -748,11 +1107,15 @@
       CATEGORIES.forEach((cat, idx) => { categoryIndexMap[cat.id] = idx; });
 
       let items = columnsData.slice();
+      if (zenCategoryFilter !== 'all') items = items.filter(a => a.category === zenCategoryFilter);
       if (q) {
         items = items.filter(a =>
           (a.title || '').toLowerCase().includes(q) ||
+          (a.subtitle || '').toLowerCase().includes(q) ||
           (a.author_topic || '').toLowerCase().includes(q) ||
-          (a.category || '').toLowerCase().includes(q)
+          (a.category || '').toLowerCase().includes(q) ||
+          (a.content || '').toLowerCase().includes(q) ||
+          (a.zeitgeist_connection || '').toLowerCase().includes(q)
         );
       }
 
@@ -817,11 +1180,15 @@
     }
 
     function openMenu() {
+      closeToday();
       const searchInput = document.getElementById('zenSearchInput');
       if (searchInput) searchInput.value = '';
+      zenCategoryFilter = 'all';
+      renderZenCategoryFilters();
       renderZenList('');
 
       document.getElementById('zenMenuModal').classList.remove('hidden');
+      document.body.classList.add('modal-open');
       setTimeout(() => {
         document.getElementById('zenDrawer').classList.remove('translate-x-full');
       }, 20);
@@ -832,6 +1199,7 @@
       document.getElementById('zenDrawer').classList.add('translate-x-full');
       setTimeout(() => {
         document.getElementById('zenMenuModal').classList.add('hidden');
+        if (document.getElementById('todayModal').classList.contains('hidden')) document.body.classList.remove('modal-open');
       }, 300);
     }
 
@@ -840,6 +1208,14 @@
       document.getElementById('reflectionInput').addEventListener('input', () => {
         clearTimeout(timer);
         timer = setTimeout(saveCurrentNote, 500);
+      });
+      window.addEventListener('scroll', updateReadingProgress, { passive: true });
+      window.addEventListener('resize', updateReadingProgress);
+      window.addEventListener('popstate', handleHistoryNavigation);
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        if (!document.getElementById('todayModal').classList.contains('hidden')) closeToday();
+        else if (!document.getElementById('zenMenuModal').classList.contains('hidden')) closeMenu();
       });
     }
 
