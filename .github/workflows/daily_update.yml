@@ -1,42 +1,33 @@
-name: Daily ARCHE Editorial Update
+name: ARCHE Coverage Watchdog
+
+# 글을 만들지 않는다. 발행(매일 07:30 KST, Aside 루틴)이 실제로 되었는지 검사만 한다.
+# 실패하면 GitHub 이 저장소 소유자에게 메일로 알린다.
 
 on:
   schedule:
-    # 매일 새벽 06:00 KST (21:00 UTC) - 아침 기상 전 신선한 데일리 사유 배달
-    - cron: '0 21 * * *'
-    # 자정 00:00 KST (15:00 UTC) - 날짜 전환 시 2차 갱신
-    - cron: '0 15 * * *'
+    # 10:00 KST - 아침 발행 확인
+    - cron: '0 1 * * *'
+    # 21:00 KST - 저녁 재확인
+    - cron: '0 12 * * *'
+  push:
+    paths:
+      - 'data/columns_db.json'
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
-
-env:
-  TZ: 'Asia/Seoul'
+  contents: read
 
 jobs:
-  update-daily-editorial:
+  check-coverage:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Run Daily Curator Pipeline
-        run: |
-          python scripts/curator.py --daily-cron
-
-      - name: Commit & Push Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --staged --quiet || (git commit -m "Auto-update: Daily ARCHE Editorial Roll [$(date '+%Y-%m-%d %H:%M KST')]" && git push origin main)
+      - name: Check daily coverage (9 categories x every date)
+        run: python scripts/check_coverage.py
