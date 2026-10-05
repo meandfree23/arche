@@ -520,7 +520,7 @@
     }
 
     function signalExcerpt(value, maxLen = 118) {
-      const text = String(value || '').replace(/s+/g, ' ').trim();
+      const text = String(value || '').replace(/\s+/g, ' ').trim();
       return text.length > maxLen ? text.slice(0, maxLen).trim() + '…' : text;
     }
 
