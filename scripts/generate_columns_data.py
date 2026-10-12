@@ -678,6 +678,13 @@ columns = [
 ]
 
 def main():
+    # ⛔ 봉인 (2026-10-12): 이 스크립트는 창간 25편 시절의 생성기다.
+    # 실행하면 data/columns_db.json 전체가 25편으로 덮어써진다. 아카이브가 이미 있으면 멈춘다.
+    # 새 글은 scripts/publish_guard.py add 로만 붙인다 (PUBLISHING.md 참고).
+    if os.path.exists(OUT_PATH):
+        import sys
+        print(f"⛔ 중단: {OUT_PATH} 가 이미 있다. 이 스크립트는 아카이브를 덮어쓰므로 실행하지 않는다.")
+        sys.exit(1)
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
     with open(OUT_PATH, "w", encoding="utf-8") as f:
         json.dump(columns, f, ensure_ascii=False, indent=2)

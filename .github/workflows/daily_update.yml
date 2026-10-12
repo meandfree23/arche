@@ -1,17 +1,19 @@
 name: ARCHE Coverage Watchdog
 
-# 글을 만들지 않는다. 발행(매일 07:30 KST, Aside 루틴)이 실제로 되었는지 검사만 한다.
+# 글을 만들지 않는다. 발행이 실제로 되었는지 검사만 한다.
+# 발행: 클라우드 예약 작업 06:33 KST (본 실행) + 12:33 KST (재시도, 이미 발행됐으면 아무것도 안 함)
 # 실패하면 GitHub 이 저장소 소유자에게 메일로 알린다.
 
 on:
   schedule:
-    # 10:00 KST - 아침 발행 확인
-    - cron: '0 1 * * *'
+    # 13:20 KST - 본 실행과 재시도가 모두 끝난 뒤 확인
+    - cron: '20 4 * * *'
     # 21:00 KST - 저녁 재확인
     - cron: '0 12 * * *'
   push:
     paths:
       - 'data/columns_db.json'
+      - 'scripts/**'
   workflow_dispatch:
 
 permissions:
@@ -29,5 +31,14 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Check daily coverage (9 categories x every date)
-        run: python scripts/check_coverage.py
+      - name: Archive structure (JSON, id 번호, 표기, 하루 1편)
+        run: python scripts/publish_guard.py audit
+
+      - name: Daily coverage (9 categories x every date)
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # 백필 push 가 오늘 발행 전에 올 수 있으므로 push 때는 오늘 누락을 경고로만
+            python scripts/check_coverage.py --allow-today-missing
+          else
+            python scripts/check_coverage.py
+          fi

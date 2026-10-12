@@ -58,7 +58,19 @@ python3 -m http.server 8080
 
 ---
 
-## ⚙️ 데일리 큐레이션 관리 엔진 (CLI)
+## 🗓️ 매일 발행
+
+발행 규칙과 절차는 **[PUBLISHING.md](PUBLISHING.md)** 한 곳에 있다. 매일 06:33 KST 클라우드 예약 작업이 9편을 쓰고(12:33 재시도), GitHub Actions 감시기가 13:20·21:00 에 확인한다.
+
+```bash
+python3 scripts/publish_guard.py plan               # 오늘 써야 할 글과 다음 id
+python3 scripts/publish_guard.py add drafts.json    # 초안 검사 후 원본 끝에 추가
+python3 scripts/publish_guard.py check              # 커밋 전 append-only 검사
+python3 scripts/publish_guard.py audit              # 아카이브 전체 구조 점검
+python3 scripts/check_coverage.py                   # 9/21 이후 모든 날짜 9편 확인
+```
+
+## ⚙️ (구) 데일리 큐레이션 관리 엔진 (CLI) — 창간 초기 구조, 현재 사이트는 쓰지 않음
 
 ```bash
 # 아카이브 현황 및 카테고리 분포 통계
