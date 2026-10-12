@@ -273,6 +273,12 @@
         <span id="todayReadProgress"></span>
       </div>
 
+      <!-- 지난 에디션을 보고 있을 때만 나타나는 오늘 호 안내 -->
+      <button id="latestEditionNotice" onclick="goToLatestArticle()" class="hidden w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-left font-sans text-xs hover:opacity-70 transition" style="background-color: var(--accent-soft); color: var(--accent); border: 1px solid var(--border-subtle);">
+        <span><span class="font-semibold">오늘의 ARCHE</span><span class="mx-1 opacity-50">·</span><span id="latestEditionNoticeText"></span></span>
+        <span aria-hidden="true">오늘 글 읽기 →</span>
+      </button>
+
       <!-- ARTICLE HERO: PURE HEADLINE EMPHASIS -->
       <header class="space-y-6">
         
@@ -985,6 +991,15 @@
       if (label) label.innerText = article.date_added === latestEditionDate ? '오늘의 ARCHE' : formatDate(article.date_added) + ' 에디션';
       if (count) count.innerText = edition.length + '편';
       if (progress) progress.innerText = readCount + ' / ' + edition.length + ' 읽음';
+      const notice = document.getElementById('latestEditionNotice');
+      if (notice) {
+        const behind = latestEditionDate && article.date_added && article.date_added < latestEditionDate;
+        notice.classList.toggle('hidden', !behind);
+        if (behind) {
+          document.getElementById('latestEditionNoticeText').innerText =
+            formatDate(latestEditionDate) + ' 새 글 ' + getEditionArticles(latestEditionDate).length + '편이 올라왔어요';
+        }
+      }
     }
 
     function renderTodayMore(article) {
